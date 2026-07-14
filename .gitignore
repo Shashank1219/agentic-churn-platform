@@ -4,3 +4,9 @@ __pycache__/
 *.pyc
 .DS_Store
 *.parquet
+
+.vscode/
+
+MANIFEST.md
+docs/
+data/
