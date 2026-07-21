@@ -6,6 +6,7 @@ __pycache__/
 *.parquet
 
 .vscode/
+pyrightconfig.json
 
 MANIFEST.md
 docs/

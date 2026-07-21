@@ -1,0 +1,25 @@
+name: 'agentic_churn'
+version: '1.0.0'
+config-version: 2
+
+profile: 'agentic_churn'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  agentic_churn:
+    staging:
+      +materialized: view
+      +schema: stg
+    intermediate:
+      +materialized: table
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts

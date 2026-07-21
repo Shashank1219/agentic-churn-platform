@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: stg_invoices
+    columns:
+      - name: invoice_no
+        tests:
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: is_cancelled
+        tests:
+          - accepted_values:
+              values: [true, false]

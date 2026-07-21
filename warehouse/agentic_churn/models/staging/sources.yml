@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: raw
+    database: retail_churn_db
+    schema: raw
+    tables:
+      - name: raw_invoices
+        columns:
+          - name: CustomerID
+            tests:
+              - not_null:
+                  config:
+                    severity: warn

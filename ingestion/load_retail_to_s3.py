@@ -41,7 +41,7 @@ def apply_date_shift(df):
     df["InvoiceDate"] = df["InvoiceDate"].apply(
         lambda d: d + relativedelta(years=years_offset)
     )
-
+    df['InvoiceDate'] = df['InvoiceDate'].dt.strftime('%Y-%m-%d %H:%M:%S')
     logger.info(f"InvoiceDate after shift: {df['InvoiceDate'].min()} to {df['InvoiceDate'].max()}")
     
     return df, years_offset
