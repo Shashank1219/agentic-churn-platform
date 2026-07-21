@@ -1,9 +1,9 @@
-with source as (
-    select * from {{ source('raw', 'raw_invoices') }}
+WITH source as (
+    SELECT * FROM {{ source('raw', 'raw_invoices') }}
 ),
 
-casted as (
-    select
+casted AS (
+    SELECT
         "InvoiceNo"                                    as invoice_no,
         "StockCode"                                     as stock_code,
         "Description"                                   as description,
@@ -17,10 +17,10 @@ casted as (
     from source
 ),
 
-deduped as (
-    select distinct * from casted
+deduped AS (
+    SELECT DISTINCT * FROM casted
 )
 
-select *
-from deduped
-where customer_id is not null
+SELECT *
+FROM deduped
+WHERE customer_id IS NOT NULL

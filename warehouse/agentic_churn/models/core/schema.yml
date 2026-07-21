@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: fct_order_lines
+    columns:
+      - name: order_line_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+
+  - name: fct_orders
+    columns:
+      - name: invoice_no
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+  - name: customer_snapshot_dates
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+    
+  - name: churn_feature_panel
+    columns:
+      - name: churned_next_90d
+        tests:
+          - accepted_values:
+              values: [0, 1]
+          - not_null

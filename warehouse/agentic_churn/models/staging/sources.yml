@@ -12,3 +12,30 @@ sources:
               - not_null:
                   config:
                     severity: warn
+      - name: raw_events
+        columns:
+          - name: customer_id
+            tests:
+              - not_null:
+                  config:
+                    severity: warn
+          - name: event_type
+            tests:
+              - accepted_values:
+                  values: ["page_view", "product_view", "add_to_cart", "login"]
+                  config:
+                    severity: warn
+
+      - name: raw_support_tickets
+        columns:
+          - name: customer_id
+            tests:
+              - not_null:
+                  config:
+                    severity: warn
+          - name: status
+            tests:
+              - accepted_values:
+                  values: ["open", "resolved"]
+                  config:
+                    severity: warn

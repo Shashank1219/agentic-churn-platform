@@ -6,6 +6,7 @@ profile: 'agentic_churn'
 
 model-paths: ["models"]
 test-paths: ["tests"]
+macro-paths: ["macros"]
 
 target-path: "target"
 clean-targets:
@@ -17,9 +18,9 @@ models:
     staging:
       +materialized: view
       +schema: stg
-    intermediate:
+    core:
       +materialized: table
-      +schema: intermediate
+      +schema: core
     marts:
       +materialized: table
       +schema: marts

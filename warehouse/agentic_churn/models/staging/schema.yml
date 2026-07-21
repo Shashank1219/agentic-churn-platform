@@ -12,4 +12,39 @@ models:
       - name: is_cancelled
         tests:
           - accepted_values:
-              values: [true, false]
+              arguments:
+                values: [true, false]
+
+  - name: stg_events
+    columns:
+      - name: event_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: event_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["page_view", "product_view", "add_to_cart", "login"]
+
+  - name: stg_support_tickets
+    columns:
+      - name: ticket_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["open", "resolved"]
+      
+      - name: resolution_days
+        tests:
+          - not_null
