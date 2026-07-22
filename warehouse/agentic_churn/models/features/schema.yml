@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: churn_features
+    columns:
+      - name: churned_next_90d
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
