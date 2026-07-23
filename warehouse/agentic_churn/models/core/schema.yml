@@ -38,3 +38,9 @@ models:
           - accepted_values:
               values: [0, 1]
           - not_null
+  - name: dim_products
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
