@@ -3,17 +3,19 @@
 import json
 import logging
 import pickle
+from pathlib import Path
 
 import pandas as pd
 import shap
 
-from feature_store import load_churn_features, split_features_labels
+from ml.feature_store import load_churn_features, split_features_labels
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = "./models/churn_model.pkl"
-FEATURE_LIST_PATH = "./models/feature_list.pkl"
+_ML_DIR = Path(__file__).resolve().parent
+MODEL_PATH = _ML_DIR / "models" / "churn_model.pkl"
+FEATURE_LIST_PATH = _ML_DIR / "models" / "feature_list.pkl"
 
 TOP_N_FEATURES = 3
 

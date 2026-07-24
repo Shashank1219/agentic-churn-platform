@@ -7,6 +7,7 @@ __pycache__/
 
 .vscode/
 pyrightconfig.json
+ml/models/
 
 MANIFEST.md
 docs/

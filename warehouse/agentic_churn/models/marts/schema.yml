@@ -1,11 +1,26 @@
 version: 2
 
 models:
-  - name: churn_features
+  - name: mart_customer_360
     columns:
-      - name: churned_next_90d
+      - name: customer_id
         tests:
+          - unique
           - not_null
+
+  - name: mart_rfm_segments
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: r_score
+        tests:
           - accepted_values:
               arguments:
-                values: [0, 1]
+                values: [1, 2, 3, 4, 5]
+      - name: segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["champions", "loyal", "at_risk", "hibernating", "new", "standard"]

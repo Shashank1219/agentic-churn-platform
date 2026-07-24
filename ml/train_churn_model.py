@@ -6,19 +6,21 @@ future snapshots into training.
 
 import logging
 import pickle
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import roc_auc_score, precision_recall_curve, classification_report
 
-from feature_store import load_churn_features, split_features_labels
+from ml.feature_store import load_churn_features, split_features_labels
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-MODEL_OUTPUT_PATH = "./models/churn_model.pkl"
-FEATURE_LIST_PATH = "./models/feature_list.pkl"
+_ML_DIR = Path(__file__).resolve().parent
+MODEL_OUTPUT_PATH = _ML_DIR / "models" / "churn_model.pkl"
+FEATURE_LIST_PATH = _ML_DIR / "models" / "feature_list.pkl"
 
 TEST_HOLDOUT_FRACTION = 0.2  # most recent ~20% of snapshot dates held out for test
 
