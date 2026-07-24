@@ -56,18 +56,25 @@ def get_latest_snapshot_per_customer(df):
     return df.loc[idx].reset_index(drop=True)
 
 
-def score(df, model, feature_list):
+def score(df: pd.DataFrame, model, feature_list: list) -> pd.DataFrame:
     X = df[feature_list]
-    probs = model.predict_proba(X)[:, 1]
+    probs = pd.Series(model.predict_proba(X)[:, 1], index=df.index, dtype=float)
 
     result = df[["customer_id", "snapshot_date"]].copy()
     result["churn_probability"] = probs
 
-    result["risk_band"] = pd.qcut(
-        result["churn_probability"], q=3, labels=["low", "medium", "high"]
+    edges = probs.quantile([0, 1 / 3, 2 / 3, 1]).to_numpy(copy=True)
+    edges[0] -= 1e-9  # ensure the minimum value is included (cut's lower bound is exclusive by default)
+
+    result["risk_band"] = pd.cut(
+        result["churn_probability"],
+        bins=edges,
+        labels=["low", "medium", "high"],
+        include_lowest=True,
     )
     result["scored_at"] = datetime.utcnow()
 
+    assert isinstance(result, pd.DataFrame)
     return result
 
 
@@ -75,7 +82,7 @@ def ensure_interventions_table_exists(conn):
     """Creates the empty target table the agent layer 
     writes validated incentives into"""
     conn.cursor().execute("""
-        CREATE TABLE IF NOT EXISTS analytics.churn_interventions (
+        CREATE OR REPLACE TABLE analytics.churn_interventions (
             customer_id       NUMBER,
             discount_pct      NUMBER,
             channel           VARCHAR,
@@ -90,7 +97,7 @@ def write_predictions(df, conn):
     conn.cursor().execute("""
         CREATE OR REPLACE TABLE analytics.churn_predictions (
             customer_id       NUMBER,
-            snapshot_date     TIMESTAMP_NTZ,
+            snapshot_date     DATE,
             churn_probability FLOAT,
             risk_band         VARCHAR,
             scored_at         TIMESTAMP_NTZ
@@ -101,6 +108,9 @@ def write_predictions(df, conn):
     df_upload = df.copy()
     df_upload.columns = [c.upper() for c in df_upload.columns]
     df_upload["RISK_BAND"] = df_upload["RISK_BAND"].astype(str)
+    # write_pandas mis-handles pandas datetime64 as nanoseconds unless stringified
+    df_upload["SNAPSHOT_DATE"] = pd.to_datetime(df_upload["SNAPSHOT_DATE"]).dt.strftime("%Y-%m-%d")
+    df_upload["SCORED_AT"] = pd.to_datetime(df_upload["SCORED_AT"]).dt.strftime("%Y-%m-%d %H:%M:%S")
 
     success, nchunks, nrows, _ = write_pandas(conn, df_upload, "CHURN_PREDICTIONS", schema="ANALYTICS")
     conn.commit()

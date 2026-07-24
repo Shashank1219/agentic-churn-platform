@@ -78,11 +78,15 @@ def _get_candidate_products(customer_id, limit = CANDIDATE_PRODUCT_LIMIT):
     conn = _get_connection("CORE")
 
     query = f"""
-        SELECT DISTINCT p.product_id, p.description
-        FROM core.fct_order_lines l
-        JOIN core.dim_products p ON l.stock_code = p.product_id
-        WHERE l.customer_id = {customer_id}
-        ORDER BY l.invoice_date DESC
+        SELECT product_id, description
+        FROM (
+            SELECT p.product_id, p.description, MAX(l.invoice_date) AS last_purchased_at
+            FROM core.fct_order_lines l
+            JOIN core.dim_products p ON l.stock_code = p.product_id
+            WHERE l.customer_id = {customer_id}
+            GROUP BY p.product_id, p.description
+        )
+        ORDER BY last_purchased_at DESC
         LIMIT {limit}
     """
     df = pd.read_sql(query, conn)
@@ -105,7 +109,7 @@ def _call_llm(customer_profile, churn_explanation, candidate_products, error_fee
     client = OpenAI()  # reads OPENAI_API_KEY from env automatically
 
     products_block = "\n".join(
-        f"- {p['product_id']}: {p['description']}" for p in candidate_products
+        f"- {p['product_id']} (description: {p['description']})" for p in candidate_products
     )
 
     system_prompt = f"""You are a retention specialist proposing a customer retention incentive.
@@ -114,12 +118,15 @@ Respond with ONLY a JSON object matching this exact shape:
   "customer_id": <int>,
   "discount_pct": <one of 0, 10, 15, 20>,
   "channel": <"email" or "push">,
-  "product_focus": <MUST be one of the product_id values listed below, exactly as written>,
+  "product_focus": <the bare product_id string ONLY, e.g. "22139" — never include the description or a colon>,
   "messaging": <string, under 300 characters, no profanity, no PII>
 }}
 
-Allowed product_focus values (choose exactly one product_id from this list):
+Allowed product_focus values (choose exactly one product_id — copy ONLY the code before the parentheses, not the description):
 {products_block}
+
+Example of a CORRECT product_focus value: "22139"
+Example of an INCORRECT product_focus value: "22139: RETROSPOT TEA SET CERAMIC 11 PC" (do not do this — no description, no colon)
 """
     user_prompt = f"""Customer profile: {json.dumps(customer_profile, default=str)}
 Churn explanation: {json.dumps(churn_explanation, default=str)}
@@ -147,6 +154,16 @@ Churn explanation: {json.dumps(churn_explanation, default=str)}
     raw_text = raw_text.strip()
     return json.loads(raw_text)
 
+def _normalize_product_focus(raw: dict):
+    # Defensive cleanup: if the model returns 'id: description' or 'id (description)' extract just the id
+    if "product_focus" in raw and isinstance(raw["product_focus"], str):
+        value = raw["product_focus"].strip()
+        # Take everything before the first colon or opening paren, if present
+        for delimiter in [":", "("]:
+            if delimiter in value:
+                value = value.split(delimiter)[0].strip()
+        raw["product_focus"] = value
+    return raw
 
 def tool_generate_retention_incentive(customer_profile, churn_explanation):
     """calls the LLM, validates against RetentionIncentive,
@@ -158,6 +175,7 @@ def tool_generate_retention_incentive(customer_profile, churn_explanation):
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             raw = _call_llm(customer_profile, churn_explanation, candidate_products, error_feedback)
+            raw = _normalize_product_focus(raw)
             incentive = RetentionIncentive(**raw)
 
             if incentive.product_focus not in valid_ids:
